@@ -1,0 +1,82 @@
+apply plugin: 'maven-publish'
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+def mavenRemoteAar = properties.getProperty('MAVEN_REMOTE_AAR')
+def mavenUserName = properties.getProperty('MAVEN_USERNAME')
+def mavenPassword = properties.getProperty('MAVEN_PASSWORD')
+def mavenGroupId = properties.getProperty('MAVEN_GROUP_ID')
+def mavenArtifactId = properties.getProperty('MAVEN_ARTIFACT_ID')
+def mavenVersion = properties.getProperty('MAVEN_VERSION')
+def mavenBuildVariant = properties.getProperty('MAVEN_BUILD_VARIANT')
+println("maven RemoteAar = $mavenRemoteAar")
+println("maven UserName = $mavenUserName")
+println("maven Password = $mavenPassword")
+println("maven GroupId = $mavenGroupId")
+println("maven ArtifactId = $mavenArtifactId")
+println("maven Version = $mavenVersion")
+println("maven BuildVariant = $mavenBuildVariant")
+// 上传代码到maven仓库
+afterEvaluate {
+    publishing {
+        // 配置maven仓库 仓库地址可配置多个 执行publish任务时 会把aar包发步到所有指定的maven仓库
+        repositories { RepositoryHandler handler ->
+            if (!mavenRemoteAar.toBoolean()) {
+                //执行命令 右侧 gradle -> xxx-xxx[common-module] -> Tasks -> publishing -> publish
+                // 指定路径的本地仓库
+                handler.maven { url "${rootDir}/repo" }
+                println("指定路径的本地仓库：[${rootDir}/repo]")
+            } else {
+                maven {
+                    url MAVEN_SNAPSHOT_URL.toString()
+                    credentials(HttpHeaderCredentials) {
+                        name = mavenUserName.toString()
+                        value = mavenPassword.toString()
+                    }
+                    authentication {
+                        header(HttpHeaderAuthentication)
+                    }
+                }
+            }
+        }
+        // 配置发布产物
+        publications {
+            // 任务名称 可以随便定义，这里定义了一个名为releaseAar的任务发布到maven
+            releaseAar(MavenPublication) { // 容器可配置的信息MavenPublication
+
+                println("Components所有变体: " + components*.name)
+                // 构建变体 上传其产出的aar
+                from components.release
+
+                // 上传源码
+                artifact sourceJar
+
+                // 库组织 域名/包名表示
+                groupId = "${mavenGroupId}.export"
+
+                // 库名称
+                artifactId = "${mavenArtifactId}-export"
+
+                // 库版本
+                version = mavenVersion.toString()
+
+            }
+        }
+    }
+}
+
+// 上传源码的task
+task sourceJar(type: Jar) {
+    println("上传代码到maven仓库源码路径：${android.sourceSets.main.java.getSrcDirs()}")
+    from android.sourceSets.main.java.getSrcDirs() // 源码路径
+    archiveClassifier = "sources"
+}
+
+apply plugin: 'ejiayou.pub.auto.publish'
+task TaskExport(dependsOn: 'autoPublish') {
+    aarInfo {
+        groupId = "${mavenGroupId}.export"
+        artifactId = "${mavenArtifactId}-export"
+        version = mavenVersion.toString()
+        buildVariant = mavenBuildVariant.toString()
+    }
+}

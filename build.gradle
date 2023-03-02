@@ -1,0 +1,56 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    repositories {
+//        google()
+        mavenCentral()
+        maven { url 'https://maven.aliyun.com/repository/central/' }
+        maven { url 'https://maven.aliyun.com/repository/public/' }
+        maven { url 'https://maven.aliyun.com/repository/jcenter/' }
+        maven { url 'https://maven.aliyun.com/repository/google/' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        maven { url "https://jitpack.io" }
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:4.2.2"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.0"
+        //JitPack 步骤一
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+        classpath 'com.github.nearbyren:ensd-composing-builds:1.3.2'
+        classpath 'com.github.nearbyren:ensd-pub:0.0.1'
+
+    }
+}
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+def mavenUserName = properties.getProperty('MAVEN_USERNAME')
+def mavenPassword = properties.getProperty('MAVEN_PASSWORD')
+allprojects {
+    repositories {
+//        google()
+        mavenCentral()
+        jcenter() {}
+        maven { url 'https://maven.aliyun.com/repository/central/' }
+        maven { url 'https://maven.aliyun.com/repository/public/' }
+        maven { url 'https://maven.aliyun.com/repository/jcenter/' }
+        maven { url 'https://maven.aliyun.com/repository/google/' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        maven { url "https://jitpack.io" }
+        maven { url "https://plugins.gradle.org/m2/" }
+        maven {
+            url MAVEN_SNAPSHOT_URL
+            credentials(HttpHeaderCredentials) {
+                name = mavenUserName
+                value = mavenPassword
+            }
+            authentication {
+                header(HttpHeaderAuthentication)
+            }
+        }
+    }
+}
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

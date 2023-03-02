@@ -1,0 +1,9 @@
+rootProject.name = "ensd-map"
+include ':app'
+include ':map-module'
+include ':map-export'
+try {
+    apply from: new File('../ensd-dependency/module_dependency.gradle')
+} catch (Exception e) {
+    e.printStackTrace()
+}
